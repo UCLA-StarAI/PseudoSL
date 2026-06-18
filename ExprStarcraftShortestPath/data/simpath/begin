@@ -1,0 +1,18 @@
+#!/bin/bash
+
+make
+echo "------------------------------------------"
+echo "Running simpath"
+./exe/simpath
+echo "Done."
+echo "------------------------------------------"
+
+echo "Formatting zdd"
+./exe/zddFormat < ./output/unreduced.zdd > ./output/unreducedFormatted.zdd
+echo "Done."
+echo "------------------------------------------"
+
+echo "Generating and model counting with SDD"
+./exe/genSdd < ./output/unreducedFormatted.zdd
+echo "Done."
+echo "------------------------------------------"

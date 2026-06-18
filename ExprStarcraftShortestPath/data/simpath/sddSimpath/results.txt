@@ -1,0 +1,116 @@
+Counting simple paths from node 1 to 31
+Count is: 681
+Counting simple paths from node 1 to 48
+Count is: 18753
+Counting simple paths from node 1 to 80
+Count is: 70775168
+Counting simple paths from node 1 to 63
+Count is: 1067
+Counting simple paths from node 1 to 79
+Count is: 2
+Counting simple paths from node 1 to 38
+Count is: 12
+Counting simple paths from node 1 to 31
+Count is: 11
+Counting simple paths from node 1 to 2
+SEG FAULT
+Counting simple paths from node 1 to 47
+Count is: 1076
+Counting simple paths from node 1 to 47
+Count is: 204
+Counting simple paths from node 1 to 61
+Count is: 5136
+Counting simple paths from node 1 to 66
+Count is: 1588
+Counting simple paths from node 1 to 66
+Count is: 0
+Counting simple paths from node 1 to 78
+Count is: 642
+Counting simple paths from node 1 to 31
+Count is: 3
+Counting simple paths from node 1 to 50
+Count is: 48824
+Counting simple paths from node 1 to 57
+Count is: 160
+Counting simple paths from node 1 to 60
+Count is: 2316
+Counting simple paths from node 1 to 60
+Count is: 2166
+Counting simple paths from node 1 to 53
+Count is: 2
+Counting simple paths from node 1 to 90
+Count is: 6466
+Counting simple paths from node 1 to 30
+Count is: 0
+Counting simple paths from node 1 to 60
+Count is: 8764
+Counting simple paths from node 1 to 82
+Count is: 0
+Counting simple paths from node 1 to 64
+Count is: 2764018
+Counting simple paths from node 1 to 50
+Count is: 1056
+Counting simple paths from node 1 to 63
+Count is: 24
+Counting simple paths from node 1 to 76
+Count is: 0
+Counting simple paths from node 1 to 61
+Count is: 0
+Counting simple paths from node 1 to 39
+Count is: 1563
+Counting simple paths from node 1 to 51
+Count is: 790
+Counting simple paths from node 1 to 69
+Count is: 1
+Counting simple paths from node 1 to 59
+Count is: 2234
+Counting simple paths from node 1 to 94
+Count is: 2482
+Counting simple paths from node 1 to 81
+Count is: 85
+Counting simple paths from node 1 to 36
+Count is: 7
+Counting simple paths from node 1 to 33
+Count is: 79
+Counting simple paths from node 1 to 41
+Count is: 243
+Counting simple paths from node 1 to 53
+Count is: 24040
+Counting simple paths from node 1 to 64
+Count is: 2744
+Counting simple paths from node 1 to 106
+Count is: 39318
+Counting simple paths from node 1 to 68
+Count is: 178
+Counting simple paths from node 1 to 22
+Count is: 3
+Counting simple paths from node 1 to 34
+Count is: 465
+Counting simple paths from node 1 to 40
+Count is: 535
+Counting simple paths from node 1 to 68
+Count is: 7177
+Counting simple paths from node 1 to 89
+Count is: 34120
+Counting simple paths from node 1 to 103
+Count is: 2203400
+Counting simple paths from node 1 to 72
+Count is: 39064
+Counting simple paths from node 1 to 6
+Count is: 1
+Counting simple paths from node 1 to 48
+Count is: 1
+Counting simple paths from node 1 to 40
+Count is: 386
+Counting simple paths from node 1 to 61
+Count is: 5464
+Counting simple paths from node 1 to 85
+Count is: 144
+Counting simple paths from node 1 to 104
+Count is: 36929
+Counting simple paths from node 1 to 33
+Count is: 3
+
+real	0m5.306s
+user	0m3.759s
+sys	0m1.224s

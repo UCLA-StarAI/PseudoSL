@@ -1,0 +1,18 @@
+#!/bin/bash
+
+make
+echo "------------------------------------------"
+echo "Running Graphillion"
+python ./graphillion/gZdd.py
+echo "Done."
+echo "------------------------------------------"
+
+echo "Formatting zdd"
+./exe/zddFormatGP < ./output/unreducedGP.zdd > ./output/unreducedFormattedGP.zdd
+echo "Done."
+echo "------------------------------------------"
+
+echo "Generating and model counting with SDD"
+./exe/genSdd < ./output/unreducedFormattedGP.zdd
+echo "Done."
+echo "------------------------------------------"

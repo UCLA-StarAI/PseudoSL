@@ -1,0 +1,7 @@
+c ids of edges start at 1
+c file syntax:
+c graph number-of-nodes number-of-edges
+c id-of-edge id-of-node id-of-node
+c
+graph 2 1
+1 0 1

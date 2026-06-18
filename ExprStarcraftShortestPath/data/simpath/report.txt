@@ -1,0 +1,190 @@
+Andy Shih
+404418629
+CS 199 Report
+
+Intro
+
+The goal of this project is to study different techniques of counting simple paths on grid graphs. I looked at algorithms for compiling this problem as a Zero-suppressed Decision Diagram (ZDD) and as a Sentential Decision Diagram (SDD).
+
+
+Background
+
+Simple paths
+
+A simple path is defined as a path in a graph which does not have repeating vertices. Simple paths have a starting and an ending vertex. Two simple paths are considered to be distinct if there is at least one edge in one path but not in the other.
+
+Grid graphs
+
+The grid graphs I studied in this project are undirected graphs with unweighted edges that form a grid shape. A nxm grid graph has nm vertices and 2nm-(n+m) edges. The number of edges is an important factor when estimating the number of simple paths on a grid graph.
+
+In this project we are concerned with simple paths on square grid graphs that start at one corner of the grid graph and end at the diagonally opposite corner of the grid graph. As an example, we can count that the number of such simple paths for a 3x3 grid graph is 12.
+
+Figure 1 - 12 simple paths in a 3x3 graph
+o-o-o     o-o-o     o-o-o     o-o o
+    |         |         |       |  
+o o o     o o-o     o-o-o     o o-o
+    |       |       |             | 
+o o o     o o-o     o-o-o     o o o
+
+
+o-o o     o-o o     o o o     o o o
+  |         |       |         |    
+o o o     o-o o     o o o     o o-o
+  |       |         |         | | |
+o o-o     o-o-o     o-o-o     o-o o
+
+
+o o-o     o o o     o o o     o o-o
+| | |     |         |         | | |
+o o o     o-o o     o-o-o     o-o o
+| | |       |           |         |
+o-o o     o o-o     o o o     o o o
+
+
+
+The number of distinct simple paths that fit the description above grows very fast as n gets large. The number of edges of square grid graphs grows at O(n^2), so the number of valid simple paths should grow at O(2^(n^2)). For larger grid graphs, it is impractical to count each simple path one by one as we did above.
+
+
+
+Existing work
+As noted above, it is much too inefficient to count each possible simple path of a grid graph one by one. Since we are only interested in the total number of solutions, there are faster techniques for generating that number. One such technique is merging similar subproblems based on relevant vertices, as shown in Knuth's simpath algorithm. The idea involves processing edges in order and noting that vertices which have all their edges processed cannot make any new connections. These vertices are essentially locked-in, so we only care about the other vertices that still have the potential of forming new connections. Using this insight, two subproblems can be merged together if they share the same structure among the vertices that can still form new connections, even if their locked vertices do not match.
+
+Naturally, vertices that have none of their edges processed will have the same state across any subproblem. So, when we want to check if we can merge two subproblems, we only have to examine vertices that have at least one of its edge processed, but not all of its edges processed. The set of the vertices that satisfy this problem for a given subproblem is called the "frontier" of the subproblem. The notion of the frontier is important, and can perhaps be simplified with a simple diagram.
+
+*insert diagram clarifying frontier*
+
+
+
+Existing algorithms combine this frontier optimization with compact boolean function data structures such as Zero-suppressed Decision Diagram (ZDD) and Zero-suppressed Sentential Decision Diagram (ZSDD). We represent edges as boolean variables (1 if we include it in the path, 0 if we do not include it in the path), and paths as a complete assignment of all the edge boolean variables. Once the data structure is created, we can traverse it like a decision tree were each layer represents an edge. If we wish to include the edge in our path, we traverse down the 1-path; otherwise, we traverse down the 0-path. Eventually, valid paths will point to a True literal and invalid paths will point to a False literal. Then, a model count of the data structure will give us the number of valid simple paths in a grid graph.
+
+
+
+Outline of project
+
+In this project I implemented the simpath algorithm based on the existing work described above. First I compiled the boolean function for simpath on a grid graph as a OBDD and verified that the model count matches the results of previous existing work. Then I converted the OBDD into ZDD and SDD based on standard reduction rules, and saw that SDDs can have a more compact representation than ZDDs with respect to the same boolean function. Finally, I attempted to generate the SDD representation of simpath directly, in the hopes that the compactness of the SDD will translate into a faster speed of compilation.
+
+
+I will go into detail about compiling a OBDD for calculating the number of simple paths in a grid graph.
+
+Figure 2 - top-down-left-right ordering of edges
+o  1  o  3  o
+2     4     5
+o  6  o  8  o
+7     9     10
+o  11 o  12 o
+
+Figure 3 - bfs ordering of edges
+o  1  o  3  o
+2     4     7
+o  5  o  8  o
+6     9     11
+o  10 o  12 o
+
+Let's examine the 3x3 grid graph example. There are 12 edges, so our boolean function will have 12 variable with each variable representing an edge (True if edge is included in final path, False if not). The general goal is that we need to exhaustively assign each edge as True or False, and after each complete assignment of the edges we can check if we have made a valid path or not. Realistically, many of these assignments will fail early on so we will be able to save time by skipping the rest of the assignments. For example, if we choose both edges 1 and 2 in the above figure, we already know there is no valid path regardless of the assignment of edges 3-12. That means we have just eliminated 1/4 of all the possible assignments of a 3x3 grid graph!
+
+Of course, the order in which we choose to assign the edges can have an huge impact on how much skipping we can do. Intuitively, it makes sense for edges that are close together in the graph to have nearby positions in the variable assignment ordering. This method of ordering should detect conflicts faster than a random ordering. In my experiments, I tested both top-down-left-right ordering and bfs ordering, as shown in the figures above. Results show that top-down-left-right ordering produced a faster compilation times (this can be explained by the frontier size, as we'll see later). For now, let's continue our analysis with the top-down-left-right ordering.
+
+Internally, we can think of the OBDD as a tree at first, which will later be reduced to a DAG. Each node has two children pointers: 0-child and 1-child. THe root of the tree represents the initial state and each level in the tree represents making an edge assignment decision, for a total of 12 levels in our 3x3 example. To take advantage of the important simpath optimization we described earlier, we will need to merge equivalent nodes in our tree to form a DAG. We will merge two nodes together if they are on the same level in the tree and if the states of their frontier nodes match completely. 
+
+More about states
+Fortunately, there are only three types of states for each node: not in a path, middle of a path, and endpoint of a path. These states are pretty straightforward and mean exactly what they say. Not in a path is represented as -1 internally, and means that none of the node's edges are used (degree 0). Middle of a path is represented as 0 internally and means that exactly two of the node's edges are used (degree 2). Endpoint of a path is represented as a number from 1 to N denoting the node number that is on the opposite end of the path, and means that exactly one of the node's edges are used (degree 1). If there is a path that goes from nodes 1 to 3 to 5 to 8, then node 1 would have a state of 8, node 3 would have a state of 0, node 5 would have a state of 0, and node 8 would have a state of 1.
+
+Initially we connect an edge between the source node and the target node to simplify our logic for checking if a path is valid. We try all possible assignments of the variables and merge nodes with similar frontier states. If at any time we form a loop but there are leftover connections that are not part of a loop, then we know that our assignment must have produced an invalid path. If at the end of an assignment we have created exactly one loop, then we have found a valid path (since we now remove our original connection between the source and target and our single loop becomes a valid path). We mark valid assignments by adding a 1-terminal child node, and invalid assignments by adding a 0-terminal child node. A model count of the OBDD now gives us the number of simple paths on a grid graph.
+
+
+Size reduction with ZDD
+ZDD is a more compact form of OBDD and is based off of two reduction rules. Both rules are very intuitive and quite powerful: experimental results that I ran show that the number of nodes can be reduced by roughly 50%. The first rule is known as sharing and merges two nodes together if they share the same 0-child and the same 1-child. The second rule is known as deletion and deletes a node if its 1-child is the 0-terminal, and puts its 0-child in the place of itself.
+
+Since the size of our internal representation is reduced using the above two rules, we can run a faster model count to get the number of simple paths on a grid graph. Unfortunately the bottle-neck of our algorithm is the compilation of our OBDD, so a faster model count is not too important.
+
+
+Size reduction with SDD
+We can reduce the size of our OBDD representation even more by converting it to a SDD. SDDs are more versatiles than OBDDs because it does not require a linear ordering of variable assignments. Instead, the order of assigning variables is represented in a tree called the vtree, whose structure allows for more interesting ways of ordering variables. With that in mind, we see that OBDDs are a special case of SDDs (when the vtree is right linear) so we pick a right linear vtree when converting our OBDD into a SDD. As expected, by picking a right linear vtree we are not really making any improvements on the OBDD that we originally compiled
+
+To see more of a reduction from using SDDs, we have to try compiling the simple paths boolean function into a SDD directly.
+
+--------------
+
+Compiling a SDD directly
+
+To compile a SDD for simple paths on a grid graph directly, we need to modify the algorithm we used for compiling an OBDD. Instead of assigning edges one by one, we now have vtree nodes that specify which edges we examine and in which order we examine them. Given a generic vtree, we can categorize the nodes into two types: leaf nodes and non-leaf nodes. Leaf nodes are always variable literals (which in our case represents an edge), and non-leaf nodes which split the variable literals in their subtrees into their left subtree or their right subtree. Leaf nodes are very easy to deal with, so we will focus all our attention on processing non-leaf nodes.
+
+Non-leaf nodes can be categorized into Shannon nodes and decomposition nodes. Shannon nodes are defined as non-leaf nodes whose left child is a leaf node. This type of node is fairly intuitive and easy to process. We simply try assigning True and False to the variable represented by the left child leaf node. Then we will get a set of possible states of our grid graph, and we pass those states to the right child of the Shannon node to be processed. At this point we are done with the current Shannon node so we continue the algorithm with the right child non-leaf node.
+
+Decomposition nodes, on the other hand, are more complicated. Since the left subtree is not a leaf node, it would be unwise to attempt the same strategy of assigning all possible values to all the variables in the left subtree. There would be too many possibilities and enumerating over all of them would take away all performance benefits of compiling an SDD. Instead, to process a decomposition node we have to split our exhaustive search into two separate halves so that our left subtree and our right subtree can be processed independently. What this entails is first identifying all the common nodes that are affected by both the edges in our vtree's left subtree and the edges in our vtree's right subtree. These common nodes cannot be processed independently by our left and right subtrees, so we must deal with them immediately by enumerating over all possible states of the common nodes. Next, we identify all connections between nodes in our left subtree's frontier and nodes in our right subtree's frontier and close them off by doing pairwise matchings. This step will be explained in detail below.
+
+Some terminology
+We are dealing with three separate graphs at once, so we need to have a clear way of referring to each one. The first graph is the vtree, whose nodes we will refer to as vnodes. The second graph is the grid graph, whose nodes we will refer to as gnodes. Lastly there is the SDD DAG, whose nodes we will refer to as znodes. The vtree graph is static and chosen by us at the beginning of the compilation. The grid graph is static and represents the problem statement. The SDD graph is dynamically being compiled by our algorithm, and each znode represents a possible assignment of the edge variables in our grid graph. Znodes do not actually store data regarding the edge variable assignment that they represent; that information is implied based on their position inside the SDD. Rather, each znode contains information on the states of each gnode that result from the the znode's particular edge variable assignment.
+
+
+
+Possible states
+It is important to note that the possible states a node can have are different from the possible states described earlier when compiling an OBDD. Since we need to have some coordination between left and right subtrees when processing a decomposition vnode, there are now 4 (instead of 3) possible states for each gnode. The four possible states are connected, reserved, unconnected, and finished (C,R,U,F). The three states connected, unconnected, and finished match the previous 3 states of OBDD compilation almost exactly, but the internal values used to represent them has changed slightly. Finished is represented by a 0 and means the gnode is either in the middle of a path or it will not be in any path. For the ith gnode, unconnected is represented by i and means the gnode is not in any path but has the possibility to be in a path in the future. Connected is represented by v, where v is the index of the gnode on the other end of the subpath. Finally, reserved is represented by -1*v, where v is the index of the gnode that our current gnode is reserved to. Reserved is the new state that is being introduced here, and essentially means that two nodes that are reserved to each other do not have a connection yet, but they must have a connection in the future. That is, we cannot declare that we have found a valid edge variable assignment that produces a simple path unless we have taken care of all reserved pairs. A reservation to itself (i.e. node i has state -1*i) means that the gnode is not reserved to any specific gnode, but that it must be connected to some node in the future. This notion of reserved pairs is very important when enumerating over common nodes during our decomposition step, as we will see later on.
+
+Decomposition step
+Enumerating over all common nodes
+This step is the biggest difference between compiling a SDD and compiling an OBDD for finding simple paths. When we encounter a gnode that is unconnected and belongs to both our left subtree's frontier and right subtree's frontier, we need to enumerate over all possibilities of states for that gnode. The left subtree side can either connect this gnode or leave it unconnected in the future. The right subtree side can also connect this gnode or leave it unconnected in the future. But, we cannot have both sides fully connect the gnode in the future, or else the gnode will be overused. That leaves us with three options: (R,F), (F,F), (F,R). Note that we use (R,F) and (F,R) instead of (C,F) and (F,C) because C requires us to currently have an actual connection with another gnode, which we do not have. Additionally, we have one last option where the gnode is partly connected on both the left and right subtree, which we will denote with (P,P). Finally, we note that (R,F) and (F,F) can be simplified down to (U,F), since (U,F) can eventually evolve into either (R,F) or (F,F) so it covers all cases. All things considered, that leaves us with the options (U,F), (F,R), and (P,P).
+
+Pairing up connections between primes and subs
+....
+....to be continued, after I figure out the details
+
+-----------------------
+
+
+Experiments with counting number of simple paths using OBDDs
+
+I ran some experiments on the Deduction server to see the performance of my implementation of the simpath algorithm. The number of nodes given is the count of nodes in the OBDD, before reduction to ZDD. Since the reduction to ZDD would be extra overhead and would pollute the execution time, I left that step for the next table that analysis the memory reduction. In Table 1 we see that the number of solutions increases rapidly, and our execution time also grows dramatically with each additional increase in grid size. Still, it is rather impressive that we can generate a count on the magnitude of 10^40 in a couple of minutes.
+
+Table 1 - Simpath on Grid Graphs
+Grid Size 			Model Count 								Number of Nodes 		Execution Time 
+2x2					2											6						0m0.001s
+3x3					12											52						0m0.001s
+4x4					184											282						0m0.001s
+5x5					8512										1241					0m0.004s
+6x6					1262816										4915					0m0.011s
+7x7					575780564									18239					0m0.035s
+8x8					789360053252								64892					0m0.110s
+9x9					3266598486981642							224145					0m0.460s
+10x10				41044208702632496804						757713					0m1.98s
+11x11				1568758030464750013214100					2519888					0m8.02s
+12x12				182413291514248049241470885236				8274262					0m28.7s
+13x13				64528039343270018963357185158482118			26894640				1m49.7s
+14x14				69450664761521361664274701548907358996488	86698791				6m58.5s
+
+
+In Table 2 we can see the reduction in memory by following the two ZDD reduction rules described earlier (Sharing and Deletion). We see approximately a 50% decrease in size for each grid size.
+
+Table 2 - Comparison between sizes of OBDD and ZDD
+Grid Size 			# of Nodes in OBDD 		# of Nodes in ZDD 			Size of OBDD 		Size of ZDD 
+2x2					6						4							40					28			
+3x3					52						26							410					210		
+4x4					282						131							2712				1286	
+5x5					1241					575							13314				6292	
+6x6					4915					2296						60120				29432		
+7x7					18239					8688						248746				123978		
+8x8					64892					31451						950024				486942
+9x9					224145					110354						3627525				1887323		
+10x10				757713					378158						12869826			6828577	
+11x11				2519888					1273057						46870671			25169293	
+12x12				8274262					4224116						159747145			86994699				
+13x13				26894640				13860874					563613072			309778762				
+14x14				86698791				41645626					1873915233			1041311067
+
+
+
+Future Work
+
+The next step in this project is to finish the compilation of simpath directly using SDDs. The only part that is left is connecting prime and sub connections in decomposition nodes. Once that is finished, I can see if there are any performance gains from compiling SDD directly for calculating the number of simple paths. As well, I would also like to extend the experiment to many different types of graphs and observe the difference between OBDDs and SDDs with regards to those graphs.
+
+
+References
+D.E.Knuth. The Art of Computer Programming, Volume 4A, Combinatorial Algorithms, Part 1. 1st. Addison-Wesley Professional, 2011.
+Darwiche, A. 2011. SDD: A new canonical representation of propositional knowledge bases. In IJCAI, 819–826.
+Nishino, M.; Yasuda, N.; Minato, S.; and Nagata, M. Compiling Graph Substructures into Sentential Decision Diagrams. In AAAI-17.
+
+
+
+
+
+

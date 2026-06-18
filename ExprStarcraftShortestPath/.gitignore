@@ -1,0 +1,14 @@
+/data/globe_tsp/
+/data/mnist_matching/
+/data/warcraft_maps/
+**/__pycache__/
+**/*.sdd
+/data/warcraft_shortest_path
+/results
+/logs
+/env
+.ipynb_checkpoints/
+*.swp
+*.bak
+*.bak*
+*.log.bak

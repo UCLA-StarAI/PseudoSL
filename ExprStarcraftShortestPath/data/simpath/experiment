@@ -1,0 +1,15 @@
+#!/bin/bash
+
+make
+
+MAX_SIZE=10
+
+echo "------------------------------------------"
+echo "Running simpath"
+
+for i in `seq 1 $MAX_SIZE`; do
+	echo $i
+	time ./exe/simpath $i
+done
+echo "Done."
+echo "------------------------------------------"
